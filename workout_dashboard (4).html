@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Workout 2.0 — 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  :root {
+    --bg:#f7f7f5;--surface:#fff;--surface2:#f0efeb;--border:rgba(0,0,0,0.1);--border2:rgba(0,0,0,0.06);
+    --text:#1a1a1a;--text2:#666;--text3:#999;--green:#1D9E75;--blue:#378ADD;--amber:#BA7517;--purple:#7F77DD;--red:#A32D2D;
+    --radius:10px;--radius-lg:14px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+  .app{max-width:940px;margin:0 auto;padding:2rem 1.5rem;}
+  .header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:2rem;}
+  .header h1{font-size:22px;font-weight:600;letter-spacing:-0.3px;}
+  .header p{font-size:12px;color:var(--text3);margin-top:3px;}
+  .tab-bar{display:flex;gap:2px;margin-bottom:1.75rem;border-bottom:1px solid var(--border2);}
+  .tab{padding:9px 18px;font-size:13px;font-weight:500;color:var(--text3);border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;font-family:'DM Sans',sans-serif;}
+  .tab.active{color:var(--text);border-bottom-color:var(--text);}
+  .section{display:none;}.section.active{display:block;}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:1.5rem;}
+  .metric-card{background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);padding:1rem 1.1rem;}
+  .metric-card .lbl{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:5px;}
+  .metric-card .val{font-size:26px;font-weight:600;font-family:'DM Mono',monospace;color:var(--text);line-height:1;}
+  .metric-card .sub{font-size:11px;color:var(--text3);margin-top:3px;}
+  .card{background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-lg);padding:1.25rem 1.5rem;margin-bottom:1rem;}
+  .card-title{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:1rem;}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;}
+  .row-item{display:flex;justify-content:space-between;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--border2);font-size:13px;}
+  .row-item:last-child{border-bottom:none;}
+  .badge{display:inline-block;font-size:11px;padding:3px 10px;border-radius:100px;font-weight:500;}
+  .badge.Run,.badge.run{background:#ddeefa;color:#0C447C;}
+  .badge.Walk,.badge.walk{background:#faeeda;color:#633806;}
+  .badge.gym{background:#e2f3ec;color:#0f6e56;}
+  .badge.Cardio,.badge.cardio{background:#eeedfe;color:#3C3489;}
+  .badge.Bike,.badge.bike{background:#fde8f5;color:#7a1a5e;}
+  .badge.Lower{background:#fcebeb;color:var(--red);}
+  .badge.Upper{background:#ddeefa;color:#0C447C;}
+  .badge.Full{background:#e2f3ec;color:#0f6e56;}
+  .week-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:0.75rem;}
+  .week-day{text-align:center;}
+  .day-label{font-size:10px;color:var(--text3);margin-bottom:5px;font-weight:500;}
+  .week-dot{width:34px;height:34px;border-radius:50%;border:1px solid var(--border);background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:600;color:var(--text3);margin:0 auto;}
+  .week-dot.gym{background:var(--green);color:white;border-color:transparent;}
+  .week-dot.run{background:var(--blue);color:white;border-color:transparent;}
+  .week-dot.walk{background:var(--amber);color:white;border-color:transparent;}
+  .week-dot.cardio{background:var(--purple);color:white;border-color:transparent;}
+  .week-dot.bike{background:#c0379a;color:white;border-color:transparent;}
+  .progress-wrap{background:var(--surface2);border-radius:100px;height:5px;margin-top:4px;}
+  .progress-bar{height:5px;border-radius:100px;}
+  table{width:100%;font-size:13px;border-collapse:collapse;}
+  th{text-align:left;font-size:11px;color:var(--text3);font-weight:500;padding:5px 0;border-bottom:1px solid var(--border2);text-transform:uppercase;letter-spacing:0.4px;}
+  td{padding:7px 0;color:var(--text);border-bottom:1px solid var(--border2);}
+  td.mono{font-family:'DM Mono',monospace;font-size:12px;}
+  tr:last-child td{border-bottom:none;}
+  .exercise-block{margin-bottom:1.25rem;padding-bottom:1.25rem;border-bottom:1px solid var(--border2);}
+  .exercise-block:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0;}
+  .exercise-name{font-size:14px;font-weight:500;margin-bottom:8px;}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;}
+  .chip{font-size:11px;padding:4px 10px;border-radius:var(--radius);background:var(--surface2);color:var(--text2);font-family:'DM Mono',monospace;}
+  .chip.pr{background:#e2f3ec;color:#0f6e56;font-weight:500;}
+  .trend-up{color:var(--green);font-size:12px;margin-left:6px;}
+  .trend-flat{color:var(--text3);font-size:12px;margin-left:6px;}
+  .gym-session{margin-bottom:1.5rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border2);}
+  .gym-session:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0;}
+  .gym-session-header{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:8px;}
+  .legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text3);}
+  .legend-dot{width:10px;height:10px;border-radius:50%;}
+  .rec-box{background:var(--surface2);border-radius:var(--radius);padding:1rem 1.25rem;font-size:13px;color:var(--text2);line-height:1.7;}
+  .pr-badge{font-size:10px;background:#e2f3ec;color:#0f6e56;padding:1px 6px;border-radius:4px;font-weight:500;margin-left:4px;font-family:'DM Sans',sans-serif;}
+  .cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;}
+  .cal-nav button{padding:6px 14px;font-size:13px;font-weight:500;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--text2);cursor:pointer;font-family:'DM Sans',sans-serif;}
+  .cal-nav button:hover{background:var(--surface2);}
+  .cal-nav h2{font-size:16px;font-weight:600;}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}
+  .cal-header{text-align:center;font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.4px;padding-bottom:6px;}
+  .cal-cell{min-height:80px;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);padding:6px 8px;}
+  .cal-cell.empty{background:transparent;border-color:transparent;min-height:80px;}
+  .cal-cell.today{border-color:var(--text);border-width:1.5px;}
+  .cal-num{font-size:12px;font-weight:600;color:var(--text3);margin-bottom:4px;}
+  .cal-cell.today .cal-num{color:var(--text);}
+  .cal-labels{display:flex;flex-wrap:wrap;gap:3px;margin-top:4px;}
+  .cal-label{font-size:9px;font-weight:600;padding:2px 5px;border-radius:3px;}
+  .cal-label.gym{background:#e2f3ec;color:#0f6e56;}
+  .cal-label.run{background:#ddeefa;color:#0C447C;}
+  .cal-label.walk{background:#faeeda;color:#633806;}
+  .cal-label.cardio{background:#eeedfe;color:#3C3489;}
+  .cal-label.bike{background:#fde8f5;color:#7a1a5e;}
+  .cal-km{font-size:9px;color:var(--text3);margin-top:2px;font-family:'DM Mono',monospace;}
+  .month-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:1rem;}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div>
+      <h1>Workout 2.0 — 2026</h1>
+      <p>Data as of April 25, 2026 · Share your Google Sheet link to get an updated file</p>
+    </div>
+  </div>
+  <div class="tab-bar">
+    <button class="tab active" onclick="showTab('overview',this)">Overview</button>
+    <button class="tab" onclick="showTab('running',this)">Running</button>
+    <button class="tab" onclick="showTab('gym',this)">Gym</button>
+    <button class="tab" onclick="showTab('progress',this)">Progress</button>
+    <button class="tab" onclick="showTab('log',this)">Log</button>
+    <button class="tab" onclick="showTab('calendar',this)">Calendar</button>
+  </div>
+  <div id="tab-overview" class="section active"></div>
+  <div id="tab-running" class="section"></div>
+  <div id="tab-gym" class="section"></div>
+  <div id="tab-progress" class="section"></div>
+  <div id="tab-log" class="section"></div>
+  <div id="tab-calendar" class="section"></div>
+</div>
+<script>
+const CARDIO=[
+  {Date:'2026-04-01',Type:'Walk',Distance_km:4.75,Duration_min:51,Duration_sec:42,Pace_per_km:'',Steps:5740,Notes:''},
+  {Date:'2026-04-02',Type:'Walk',Distance_km:5.89,Duration_min:63,Duration_sec:0,Pace_per_km:'',Steps:7058,Notes:''},
+  {Date:'2026-04-03',Type:'Run',Distance_km:9.16,Duration_min:53,Duration_sec:5,Pace_per_km:'5:48',Steps:0,Notes:''},
+  {Date:'2026-04-04',Type:'Walk',Distance_km:2.64,Duration_min:39,Duration_sec:38,Pace_per_km:'',Steps:3528,Notes:''},
+  {Date:'2026-04-04',Type:'Walk',Distance_km:3.70,Duration_min:36,Duration_sec:53,Pace_per_km:'',Steps:4334,Notes:''},
+  {Date:'2026-04-05',Type:'Walk',Distance_km:6.11,Duration_min:60,Duration_sec:0,Pace_per_km:'',Steps:6838,Notes:''},
+  {Date:'2026-04-06',Type:'Walk',Distance_km:1.84,Duration_min:20,Duration_sec:26,Pace_per_km:'',Steps:2132,Notes:''},
+  {Date:'2026-04-08',Type:'Walk',Distance_km:2.24,Duration_min:27,Duration_sec:43,Pace_per_km:'',Steps:3006,Notes:''},
+  {Date:'2026-04-09',Type:'Walk',Distance_km:2.71,Duration_min:31,Duration_sec:22,Pace_per_km:'',Steps:3208,Notes:''},
+  {Date:'2026-04-10',Type:'Cardio',Distance_km:0,Duration_min:38,Duration_sec:33,Pace_per_km:'',Steps:0,Notes:'Stair Master'},
+  {Date:'2026-04-11',Type:'Walk',Distance_km:3.95,Duration_min:42,Duration_sec:57,Pace_per_km:'',Steps:4706,Notes:''},
+  {Date:'2026-04-11',Type:'Walk',Distance_km:1.15,Duration_min:11,Duration_sec:53,Pace_per_km:'',Steps:1376,Notes:''},
+  {Date:'2026-04-12',Type:'Walk',Distance_km:2.78,Duration_min:29,Duration_sec:34,Pace_per_km:'',Steps:3304,Notes:''},
+  {Date:'2026-04-12',Type:'Run',Distance_km:6.63,Duration_min:37,Duration_sec:45,Pace_per_km:'5:42',Steps:0,Notes:''},
+  {Date:'2026-04-12',Type:'Run',Distance_km:1.03,Duration_min:5,Duration_sec:19,Pace_per_km:'5:08',Steps:0,Notes:''},
+  {Date:'2026-04-12',Type:'Walk',Distance_km:3.42,Duration_min:36,Duration_sec:51,Pace_per_km:'',Steps:4172,Notes:''},
+  {Date:'2026-04-13',Type:'Walk',Distance_km:2.04,Duration_min:25,Duration_sec:21,Pace_per_km:'',Steps:2510,Notes:''},
+  {Date:'2026-04-14',Type:'Walk',Distance_km:3.45,Duration_min:38,Duration_sec:29,Pace_per_km:'',Steps:3040,Notes:''},
+  {Date:'2026-04-15',Type:'Walk',Distance_km:1.80,Duration_min:21,Duration_sec:2,Pace_per_km:'',Steps:2192,Notes:''},
+  {Date:'2026-04-15',Type:'Walk',Distance_km:2.74,Duration_min:29,Duration_sec:51,Pace_per_km:'',Steps:3202,Notes:''},
+  {Date:'2026-04-16',Type:'Walk',Distance_km:1.91,Duration_min:21,Duration_sec:35,Pace_per_km:'',Steps:2236,Notes:''},
+  {Date:'2026-04-17',Type:'Run',Distance_km:15.40,Duration_min:120,Duration_sec:0,Pace_per_km:'7:47',Steps:0,Notes:''},
+  {Date:'2026-04-18',Type:'Walk',Distance_km:4.88,Duration_min:52,Duration_sec:23,Pace_per_km:'',Steps:5612,Notes:''},
+  {Date:'2026-04-19',Type:'Run',Distance_km:1.61,Duration_min:11,Duration_sec:39,Pace_per_km:'7:14',Steps:0,Notes:''},
+  {Date:'2026-04-19',Type:'Walk',Distance_km:2.40,Duration_min:26,Duration_sec:52,Pace_per_km:'',Steps:2846,Notes:''},
+  {Date:'2026-04-20',Type:'Run',Distance_km:5.01,Duration_min:28,Duration_sec:34,Pace_per_km:'5:42',Steps:0,Notes:''},
+  {Date:'2026-04-21',Type:'Walk',Distance_km:5.37,Duration_min:55,Duration_sec:43,Pace_per_km:'',Steps:6312,Notes:''},
+  {Date:'2026-04-22',Type:'Walk',Distance_km:2.93,Duration_min:34,Duration_sec:28,Pace_per_km:'',Steps:3490,Notes:''},
+  {Date:'2026-04-22',Type:'Run',Distance_km:5.01,Duration_min:28,Duration_sec:22,Pace_per_km:'5:40',Steps:0,Notes:''},
+  {Date:'2026-04-23',Type:'Walk',Distance_km:2.62,Duration_min:31,Duration_sec:2,Pace_per_km:'',Steps:3084,Notes:''},
+  {Date:'2026-04-24',Type:'Walk',Distance_km:3.41,Duration_min:38,Duration_sec:14,Pace_per_km:'',Steps:4206,Notes:''},
+  {Date:'2026-04-25',Type:'Walk',Distance_km:3.13,Duration_min:33,Duration_sec:35,Pace_per_km:'',Steps:3640,Notes:''},
+  {Date:'2026-04-25',Type:'Bike',Distance_km:3.00,Duration_min:11,Duration_sec:36,Pace_per_km:'',Steps:0,Notes:''},
+];
+const GYM=[
+  {Date:'2026-04-06',Gym_Day:'Lower',Superset:'None',Exercise:'Hip Thrusts',Sets:3,Reps:10,Weight_lbs:80,Notes:'Barbell HT'},
+  {Date:'2026-04-06',Gym_Day:'Lower',Superset:'None',Exercise:'RDL',Sets:3,Reps:10,Weight_lbs:95,Notes:''},
+  {Date:'2026-04-06',Gym_Day:'Lower',Superset:'A',Exercise:'Goblet Squats',Sets:3,Reps:12,Weight_lbs:30,Notes:'Alt: Leg Press'},
+  {Date:'2026-04-06',Gym_Day:'Lower',Superset:'A',Exercise:'Leg Curls',Sets:3,Reps:12,Weight_lbs:75,Notes:''},
+  {Date:'2026-04-06',Gym_Day:'Lower',Superset:'B',Exercise:'Reverse Lunges (Right)',Sets:3,Reps:10,Weight_lbs:20,Notes:''},
+  {Date:'2026-04-06',Gym_Day:'Lower',Superset:'B',Exercise:'Reverse Lunges (Left)',Sets:3,Reps:10,Weight_lbs:20,Notes:''},
+  {Date:'2026-04-06',Gym_Day:'Lower',Superset:'B',Exercise:'Calves Raise (Supersquat machine face in)',Sets:3,Reps:15,Weight_lbs:70,Notes:'Alt: Standing calve raises'},
+  {Date:'2026-04-06',Gym_Day:'Lower',Superset:'None',Exercise:'Incline Walk',Sets:0,Reps:0,Weight_lbs:0,Notes:'5-10 minutes'},
+  {Date:'2026-04-09',Gym_Day:'Upper',Superset:'A',Exercise:'Lat Pulldown',Sets:3,Reps:10,Weight_lbs:70,Notes:''},
+  {Date:'2026-04-09',Gym_Day:'Upper',Superset:'A',Exercise:'DB Bent over row',Sets:3,Reps:10,Weight_lbs:22.5,Notes:''},
+  {Date:'2026-04-09',Gym_Day:'Upper',Superset:'None',Exercise:'Wide Grip Cable Row',Sets:3,Reps:12,Weight_lbs:60,Notes:''},
+  {Date:'2026-04-09',Gym_Day:'Upper',Superset:'B',Exercise:'Overhead press',Sets:3,Reps:10,Weight_lbs:22.5,Notes:'20-22.5, 8-10 reps'},
+  {Date:'2026-04-09',Gym_Day:'Upper',Superset:'B',Exercise:'Lateral Raises',Sets:3,Reps:12,Weight_lbs:10,Notes:''},
+  {Date:'2026-04-09',Gym_Day:'Upper',Superset:'C',Exercise:'Cable Bicep Curls',Sets:3,Reps:10,Weight_lbs:45,Notes:'10-12'},
+  {Date:'2026-04-09',Gym_Day:'Upper',Superset:'C',Exercise:'Cable Tricep Extensions',Sets:3,Reps:10,Weight_lbs:47.75,Notes:'10-12'},
+  {Date:'2026-04-09',Gym_Day:'Upper',Superset:'None',Exercise:'Elliptical',Sets:0,Reps:0,Weight_lbs:0,Notes:'5-10 minutes'},
+  {Date:'2026-04-13',Gym_Day:'Full',Superset:'A',Exercise:'Step ups (Right)',Sets:3,Reps:10,Weight_lbs:20,Notes:''},
+  {Date:'2026-04-13',Gym_Day:'Full',Superset:'A',Exercise:'Step ups (Left)',Sets:3,Reps:10,Weight_lbs:20,Notes:''},
+  {Date:'2026-04-13',Gym_Day:'Full',Superset:'A',Exercise:'Barbell Bent Over Row',Sets:3,Reps:10,Weight_lbs:55,Notes:''},
+  {Date:'2026-04-13',Gym_Day:'Full',Superset:'B',Exercise:'Straight-Arm Cable Pulldown',Sets:3,Reps:12,Weight_lbs:45,Notes:''},
+  {Date:'2026-04-13',Gym_Day:'Full',Superset:'B',Exercise:'Face Pull',Sets:3,Reps:12,Weight_lbs:50.5,Notes:''},
+  {Date:'2026-04-13',Gym_Day:'Full',Superset:'C',Exercise:'Wall Sit',Sets:0,Reps:0,Weight_lbs:0,Notes:'45 seconds'},
+  {Date:'2026-04-13',Gym_Day:'Full',Superset:'C',Exercise:'DB Overhead Tricep Extension',Sets:3,Reps:10,Weight_lbs:0,Notes:''},
+  {Date:'2026-04-13',Gym_Day:'Full',Superset:'C',Exercise:'Bicep Curls',Sets:3,Reps:10,Weight_lbs:15,Notes:''},
+  {Date:'2026-04-13',Gym_Day:'Full',Superset:'None',Exercise:'Rowing Machine',Sets:0,Reps:0,Weight_lbs:0,Notes:'10 minutes'},
+  {Date:'2026-04-16',Gym_Day:'Lower',Superset:'None',Exercise:'Hip Thrusts',Sets:3,Reps:10,Weight_lbs:80,Notes:'Barbell HT'},
+  {Date:'2026-04-16',Gym_Day:'Lower',Superset:'None',Exercise:'RDL',Sets:3,Reps:10,Weight_lbs:95,Notes:''},
+  {Date:'2026-04-16',Gym_Day:'Lower',Superset:'A',Exercise:'Goblet Squats',Sets:3,Reps:12,Weight_lbs:30,Notes:'Alt: Leg Press'},
+  {Date:'2026-04-16',Gym_Day:'Lower',Superset:'A',Exercise:'Leg Curls',Sets:3,Reps:12,Weight_lbs:75,Notes:''},
+  {Date:'2026-04-16',Gym_Day:'Lower',Superset:'B',Exercise:'Reverse Lunges (Right)',Sets:3,Reps:10,Weight_lbs:20,Notes:''},
+  {Date:'2026-04-16',Gym_Day:'Lower',Superset:'B',Exercise:'Reverse Lunges (Left)',Sets:3,Reps:10,Weight_lbs:20,Notes:''},
+  {Date:'2026-04-16',Gym_Day:'Lower',Superset:'B',Exercise:'Calves Raise (Supersquat machine face in)',Sets:3,Reps:15,Weight_lbs:70,Notes:'Alt: Standing calve raises'},
+  {Date:'2026-04-16',Gym_Day:'Lower',Superset:'None',Exercise:'Incline Walk',Sets:0,Reps:0,Weight_lbs:0,Notes:'5-10 minutes'},
+  {Date:'2026-04-19',Gym_Day:'Upper',Superset:'A',Exercise:'Lat Pulldown',Sets:3,Reps:10,Weight_lbs:70,Notes:''},
+  {Date:'2026-04-19',Gym_Day:'Upper',Superset:'A',Exercise:'DB Bent over row',Sets:3,Reps:10,Weight_lbs:22.5,Notes:''},
+  {Date:'2026-04-19',Gym_Day:'Upper',Superset:'None',Exercise:'Wide Grip Cable Row',Sets:3,Reps:12,Weight_lbs:60,Notes:''},
+  {Date:'2026-04-19',Gym_Day:'Upper',Superset:'B',Exercise:'Overhead press',Sets:3,Reps:10,Weight_lbs:22.5,Notes:'20-22.5, 8-10 reps'},
+  {Date:'2026-04-19',Gym_Day:'Upper',Superset:'B',Exercise:'Lateral Raises',Sets:3,Reps:12,Weight_lbs:10,Notes:''},
+  {Date:'2026-04-19',Gym_Day:'Upper',Superset:'C',Exercise:'Cable Bicep Curls',Sets:3,Reps:10,Weight_lbs:45,Notes:'10-12'},
+  {Date:'2026-04-19',Gym_Day:'Upper',Superset:'C',Exercise:'Cable Tricep Extensions',Sets:3,Reps:10,Weight_lbs:47.75,Notes:'10-12'},
+  {Date:'2026-04-19',Gym_Day:'Upper',Superset:'None',Exercise:'Elliptical',Sets:0,Reps:0,Weight_lbs:0,Notes:'5-10 minutes'},
+  {Date:'2026-04-23',Gym_Day:'Full',Superset:'A',Exercise:'Step ups (Right)',Sets:3,Reps:10,Weight_lbs:20,Notes:''},
+  {Date:'2026-04-23',Gym_Day:'Full',Superset:'A',Exercise:'Step ups (Left)',Sets:3,Reps:10,Weight_lbs:20,Notes:''},
+  {Date:'2026-04-23',Gym_Day:'Full',Superset:'A',Exercise:'Barbell Bent Over Row',Sets:3,Reps:10,Weight_lbs:55,Notes:''},
+  {Date:'2026-04-23',Gym_Day:'Full',Superset:'B',Exercise:'Straight-Arm Cable Pulldown',Sets:3,Reps:12,Weight_lbs:45,Notes:''},
+  {Date:'2026-04-23',Gym_Day:'Full',Superset:'B',Exercise:'Face Pull',Sets:3,Reps:12,Weight_lbs:50.5,Notes:''},
+  {Date:'2026-04-23',Gym_Day:'Full',Superset:'C',Exercise:'Wall Sit',Sets:0,Reps:0,Weight_lbs:0,Notes:'45 seconds'},
+  {Date:'2026-04-23',Gym_Day:'Full',Superset:'C',Exercise:'DB Overhead Tricep Extension',Sets:3,Reps:10,Weight_lbs:0,Notes:''},
+  {Date:'2026-04-23',Gym_Day:'Full',Superset:'C',Exercise:'Bicep Curls',Sets:3,Reps:10,Weight_lbs:15,Notes:''},
+  {Date:'2026-04-23',Gym_Day:'Full',Superset:'None',Exercise:'Rowing Machine',Sets:0,Reps:0,Weight_lbs:0,Notes:'10 minutes'},
+];
+
+const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+function parsePaceStr(s){if(!s)return null;const p=s.split(':');if(p.length!==2)return null;return parseInt(p[0])+parseInt(p[1])/60;}
+function paceStr(v){if(!v||isNaN(v))return'—';const m=Math.floor(v),s=Math.floor((v-m)*60);return m+':'+(s<10?'0':'')+s;}
+function calcPace(dist,dmin,dsec){const mins=parseFloat(dmin||0)+parseFloat(dsec||0)/60;const d=parseFloat(dist);return d&&mins?mins/d:null;}
+function durStr(dmin,dsec){const m=parseInt(dmin||0),s=parseInt(dsec||0);if(!m&&!s)return'—';return(m?m+'m ':'')+( s?s+'s':'');}
+function getWeekStart(){const d=new Date();d.setDate(d.getDate()-d.getDay());return d.toISOString().slice(0,10);}
+function showTab(t,btn){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+t).classList.add('active');btn.classList.add('active');
+  if(t==='running')renderRunning();
+  if(t==='gym')renderGym();
+  if(t==='progress')renderProgress();
+  if(t==='log')renderLog();
+  if(t==='calendar')renderCalendar();
+}
+
+function renderOverview(){
+  const sw=getWeekStart();
+  const runs=CARDIO.filter(r=>r.Type==='Run');
+  const walks=CARDIO.filter(r=>r.Type==='Walk');
+  const gymDates=[...new Set(GYM.map(r=>r.Date))];
+  const weekGymDays=[...new Set(GYM.filter(r=>r.Date>=sw).map(r=>r.Date))];
+  const weekRuns=runs.filter(r=>r.Date>=sw);
+  const weekWalks=walks.filter(r=>r.Date>=sw);
+  const totalRunKm=runs.reduce((a,r)=>a+r.Distance_km,0);
+  const totalWalkKm=walks.reduce((a,r)=>a+r.Distance_km,0);
+  const totalSteps=CARDIO.reduce((a,r)=>a+(r.Steps||0),0);
+  const paces=runs.map(r=>r.Pace_per_km?parsePaceStr(r.Pace_per_km):calcPace(r.Distance_km,r.Duration_min,r.Duration_sec)).filter(Boolean);
+  const bestPace=paces.length?Math.min(...paces):null;
+  const avgPace=paces.length?paces.reduce((a,p)=>a+p,0)/paces.length:null;
+
+  const weekDays=[];
+  for(let i=0;i<7;i++){const d=new Date();d.setDate(d.getDate()-d.getDay()+i);weekDays.push(d.toISOString().slice(0,10));}
+  const runDates=runs.map(r=>r.Date),walkDates=walks.map(r=>r.Date),cardioDates=CARDIO.filter(r=>r.Type==='Cardio').map(r=>r.Date);
+
+  const dotHTML=weekDays.map((d,i)=>{
+    const isGym=gymDates.includes(d),isRun=runDates.includes(d),isWalk=walkDates.includes(d),isCardio=cardioDates.includes(d),isBike=CARDIO.filter(r=>r.Type==='Bike').map(r=>r.Date).includes(d);
+    const cls=isGym?'gym':isRun?'run':isWalk?'walk':isCardio?'cardio':isBike?'bike':'';
+    const lbl=isGym?'GYM':isRun?'RUN':isWalk?'WLK':isCardio?'CRD':isBike?'BIK':'';
+    return`<div class="week-day"><div class="day-label">${DAYS[i]}</div><div class="week-dot ${cls}">${lbl}</div></div>`;
+  }).join('');
+
+  const targets=[
+    {label:'Gym sessions',done:weekGymDays.length,goal:3,color:'#1D9E75'},
+    {label:'Runs',done:weekRuns.length,goal:1,color:'#378ADD'},
+    {label:'Walks',done:weekWalks.length,goal:2,color:'#BA7517'},
+  ];
+  const gymLeft=Math.max(0,3-weekGymDays.length),runLeft=Math.max(0,1-weekRuns.length),walkLeft=Math.max(0,2-weekWalks.length);
+  let rec='';
+  if(!gymLeft&&!runLeft&&!walkLeft){rec='All targets hit this week! Great work. Take a rest day or do light mobility/stretching.';}
+  else{
+    const parts=[];
+    if(gymLeft)parts.push(`${gymLeft} more gym session${gymLeft>1?'s':''} to hit your weekly target — prioritize Lower body if you only have one left.`);
+    if(runLeft)parts.push('Get your weekly run in — even 20 minutes counts toward your endurance goal.');
+    if(walkLeft)parts.push(`${walkLeft} more walk${walkLeft>1?'s':''} this week — great for active recovery on rest days.`);
+    rec=parts.join(' ');
+  }
+
+  const bestDistRun=runs.length?runs.reduce((b,r)=>r.Distance_km>b.Distance_km?r:b,runs[0]):null;
+  const bestWalk=walks.length?walks.reduce((b,r)=>r.Distance_km>b.Distance_km?r:b,walks[0]):null;
+  const byDay={};CARDIO.forEach(r=>{byDay[r.Date]=(byDay[r.Date]||0)+(r.Steps||0);});
+  const maxSteps=Object.values(byDay).length?Math.max(...Object.values(byDay)):0;
+
+  document.getElementById('tab-overview').innerHTML=`
+    <div class="cards">
+      <div class="metric-card"><div class="lbl">Gym sessions</div><div class="val">${gymDates.length}</div><div class="sub">all time</div></div>
+      <div class="metric-card"><div class="lbl">Total km run</div><div class="val">${totalRunKm.toFixed(2)}</div><div class="sub">all time</div></div>
+      <div class="metric-card"><div class="lbl">Total km walked</div><div class="val">${totalWalkKm.toFixed(2)}</div><div class="sub">all time</div></div>
+      <div class="metric-card"><div class="lbl">Best pace</div><div class="val">${paceStr(bestPace)}</div><div class="sub">min/km</div></div>
+      <div class="metric-card"><div class="lbl">Avg pace</div><div class="val">${paceStr(avgPace)}</div><div class="sub">min/km</div></div>
+      <div class="metric-card"><div class="lbl">Total steps</div><div class="val">${totalSteps.toLocaleString()}</div><div class="sub">all time</div></div>
+    </div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">This week</div>
+        <div class="week-grid">${dotHTML}</div>
+        <div class="legend">
+          <div class="legend-item"><div class="legend-dot" style="background:#1D9E75"></div>Gym</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#378ADD"></div>Run</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#BA7517"></div>Walk</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#7F77DD"></div>Cardio</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#c0379a"></div>Bike</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Weekly targets</div>
+        ${targets.map(t=>`
+          <div style="margin-bottom:12px;">
+            <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;">
+              <span style="color:var(--text2);">${t.label}</span>
+              <span style="font-weight:600;font-family:'DM Mono',monospace;font-size:12px;">${Math.min(t.done,t.goal)}/${t.goal}</span>
+            </div>
+            <div class="progress-wrap"><div class="progress-bar" style="width:${Math.min(100,t.goal?t.done/t.goal*100:0)}%;background:${t.color};"></div></div>
+          </div>`).join('')}
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Best performances</div>
+      ${[
+        {k:'Longest run',v:bestDistRun?bestDistRun.Distance_km.toFixed(2)+' km on '+bestDistRun.Date:'—'},
+        {k:'Best pace',v:paceStr(bestPace)+' min/km'},
+        {k:'Longest walk',v:bestWalk?bestWalk.Distance_km.toFixed(2)+' km on '+bestWalk.Date:'—'},
+        {k:'Best step day',v:maxSteps.toLocaleString()+' steps'},
+      ].map(p=>`<div class="row-item"><span style="color:var(--text2);">${p.k}</span><span style="font-weight:500;font-family:'DM Mono',monospace;font-size:12px;">${p.v}</span></div>`).join('')}
+    </div>
+    <div class="card"><div class="card-title">Weekly recommendation</div><div class="rec-box">${rec}</div></div>`;
+}
+
+let runChart=null;
+function renderRunning(){
+  const runs=CARDIO.filter(r=>r.Type==='Run').sort((a,b)=>a.Date.localeCompare(b.Date));
+  if(!runs.length){document.getElementById('tab-running').innerHTML='<p style="color:var(--text3);padding:2rem 0;text-align:center;">No runs logged yet.</p>';return;}
+  const paces=runs.map(r=>r.Pace_per_km?parsePaceStr(r.Pace_per_km):calcPace(r.Distance_km,r.Duration_min,r.Duration_sec));
+  const validP=paces.filter(Boolean);
+  const bestPace=validP.length?Math.min(...validP):null;
+  const avgPace=validP.length?validP.reduce((a,p)=>a+p,0)/validP.length:null;
+  const dists=runs.map(r=>r.Distance_km);
+  const totalKm=dists.reduce((a,d)=>a+d,0);
+  const bestDist=Math.max(...dists);
+  const sw=getWeekStart();
+
+  document.getElementById('tab-running').innerHTML=`
+    <div class="cards">
+      <div class="metric-card"><div class="lbl">Total runs</div><div class="val">${runs.length}</div></div>
+      <div class="metric-card"><div class="lbl">Total km</div><div class="val">${totalKm.toFixed(2)}</div></div>
+      <div class="metric-card"><div class="lbl">Best pace</div><div class="val">${paceStr(bestPace)}</div><div class="sub">min/km</div></div>
+      <div class="metric-card"><div class="lbl">Avg pace</div><div class="val">${paceStr(avgPace)}</div><div class="sub">min/km</div></div>
+      <div class="metric-card"><div class="lbl">Longest run</div><div class="val">${bestDist.toFixed(2)}</div><div class="sub">km</div></div>
+      <div class="metric-card"><div class="lbl">This week</div><div class="val">${runs.filter(r=>r.Date>=sw).length}</div><div class="sub">runs</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Run history</div>
+      <table>
+        <tr><th>Date</th><th>Distance</th><th>Duration</th><th>Pace /km</th><th>Steps</th><th>Notes</th></tr>
+        ${runs.slice().reverse().map(r=>{
+          const p=r.Pace_per_km||paceStr(calcPace(r.Distance_km,r.Duration_min,r.Duration_sec));
+          const isBestDist=r.Distance_km===bestDist;
+          const isBestPace=parsePaceStr(p)===bestPace;
+          return`<tr>
+            <td>${r.Date}</td>
+            <td class="mono">${r.Distance_km.toFixed(2)} km${isBestDist?'<span class="pr-badge">PR</span>':''}</td>
+            <td class="mono">${durStr(r.Duration_min,r.Duration_sec)}</td>
+            <td class="mono">${p||'—'}${isBestPace?'<span class="pr-badge">PR</span>':''}</td>
+            <td class="mono">${r.Steps||'—'}</td>
+            <td style="color:var(--text2);font-size:12px;">${r.Notes||''}</td>
+          </tr>`;
+        }).join('')}
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-title">Distance over time</div>
+      <div style="position:relative;width:100%;height:200px;"><canvas id="run-chart"></canvas></div>
+    </div>`;
+
+  if(runChart)runChart.destroy();
+  runChart=new Chart(document.getElementById('run-chart'),{
+    type:'bar',
+    data:{labels:runs.map(r=>r.Date.slice(5)),datasets:[{label:'km',data:runs.map(r=>r.Distance_km),backgroundColor:'#378ADD',borderRadius:5}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{font:{size:11}}},x:{ticks:{font:{size:11}},grid:{display:false}}}}
+  });
+}
+
+function renderGym(){
+  const gymDates=[...new Set(GYM.map(r=>r.Date))].sort((a,b)=>b.localeCompare(a));
+  if(!gymDates.length){document.getElementById('tab-gym').innerHTML='<p style="color:var(--text3);padding:2rem 0;text-align:center;">No gym sessions yet.</p>';return;}
+  const sw=getWeekStart();
+  const weekGymDays=[...new Set(GYM.filter(r=>r.Date>=sw).map(r=>r.Date))];
+  const dayTypes={};GYM.forEach(r=>{if(!dayTypes[r.Date])dayTypes[r.Date]=r.Gym_Day;});
+  const counts={Lower:0,Upper:0,Full:0};Object.values(dayTypes).forEach(d=>{if(counts[d]!==undefined)counts[d]++;});
+
+  document.getElementById('tab-gym').innerHTML=`
+    <div class="cards">
+      <div class="metric-card"><div class="lbl">Total sessions</div><div class="val">${gymDates.length}</div></div>
+      <div class="metric-card"><div class="lbl">This week</div><div class="val">${weekGymDays.length}/3</div></div>
+      <div class="metric-card"><div class="lbl">Lower days</div><div class="val">${counts.Lower}</div></div>
+      <div class="metric-card"><div class="lbl">Upper days</div><div class="val">${counts.Upper}</div></div>
+      <div class="metric-card"><div class="lbl">Full days</div><div class="val">${counts.Full}</div></div>
+    </div>
+    <div class="card"><div class="card-title">Sessions (newest first)</div>
+      ${gymDates.map(date=>{
+        const exs=GYM.filter(r=>r.Date===date);
+        const dayType=exs[0]?.Gym_Day||'';
+        return`<div class="gym-session">
+          <div class="gym-session-header"><span class="badge ${dayType}">${dayType}</span><span style="font-size:14px;font-weight:500;">${date}</span></div>
+          <table>
+            <tr><th>Exercise</th><th>Superset</th><th>Sets</th><th>Reps</th><th>Weight</th><th>Notes</th></tr>
+            ${exs.map(e=>`<tr>
+              <td>${e.Exercise}</td>
+              <td style="color:var(--text3);font-size:11px;">${e.Superset!=='None'?e.Superset:''}</td>
+              <td class="mono">${e.Sets||'—'}</td>
+              <td class="mono">${e.Reps||'—'}</td>
+              <td class="mono">${e.Weight_lbs?e.Weight_lbs+' lbs':'—'}</td>
+              <td style="color:var(--text2);font-size:12px;">${e.Notes||''}</td>
+            </tr>`).join('')}
+          </table>
+        </div>`;
+      }).join('')}
+    </div>`;
+}
+
+function renderProgress(){
+  const exercises=[...new Set(GYM.map(r=>r.Exercise))].filter(e=>GYM.some(r=>r.Exercise===e&&r.Weight_lbs>0)).sort();
+  if(!exercises.length){document.getElementById('tab-progress').innerHTML='<p style="color:var(--text3);padding:2rem 0;text-align:center;">No data yet.</p>';return;}
+  const blocks=exercises.map(ex=>{
+    const sessions=GYM.filter(r=>r.Exercise===ex&&r.Weight_lbs>0).sort((a,b)=>a.Date.localeCompare(b.Date));
+    const weights=sessions.map(s=>s.Weight_lbs);
+    const maxW=Math.max(...weights);
+    const improved=weights[weights.length-1]>weights[0];
+    const chips=sessions.map(s=>{
+      const isPR=s.Weight_lbs===maxW;
+      return`<span class="chip${isPR?' pr':''}" title="${s.Date}">${s.Date.slice(5)}: ${s.Weight_lbs}lbs${s.Reps?' ×'+s.Reps:''}</span>`;
+    }).join('');
+    return`<div class="exercise-block">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <div class="exercise-name">${ex}</div>
+        <div style="font-size:12px;font-family:'DM Mono',monospace;color:var(--text2);">PR: <strong style="color:var(--text);">${maxW} lbs</strong><span class="${improved?'trend-up':'trend-flat'}">${improved?'↑':'→'}</span></div>
+      </div>
+      <div class="chips">${chips}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('tab-progress').innerHTML=`
+    <div class="card" style="margin-bottom:0.75rem;">
+      <div style="font-size:13px;color:var(--text2);line-height:1.7;">Green chips = personal record. ↑ = weight increased since first session.<br><strong>Rule:</strong> Hit top reps 2 sessions in a row → increase by +5–10 lbs (lower) or +2.5–5 lbs (upper).</div>
+    </div>
+    <div class="card"><div class="card-title">Exercise progression</div>${blocks}</div>`;
+}
+
+function renderLog(){
+  const gymDayEntries=[...new Set(GYM.map(r=>r.Date))].map(date=>{
+    const exs=GYM.filter(r=>r.Date===date);
+    return{Date:date,_type:'gym',Gym_Day:exs[0]?.Gym_Day,_count:exs.length};
+  });
+  const all=[...CARDIO.map(r=>({...r,_type:r.Type})),...gymDayEntries].sort((a,b)=>b.Date.localeCompare(a.Date));
+  document.getElementById('tab-log').innerHTML=`
+    <div class="card"><div class="card-title">All sessions — ${all.length} total</div>
+      ${all.map(r=>{
+        const t=r._type;let detail='';
+        if(t==='Run'||t==='Walk'){
+          const pace=r.Pace_per_km||paceStr(calcPace(r.Distance_km,r.Duration_min,r.Duration_sec));
+          detail=[r.Distance_km?r.Distance_km.toFixed(2)+' km':'',durStr(r.Duration_min,r.Duration_sec),pace&&t==='Run'?pace+' /km':'',r.Steps?r.Steps.toLocaleString()+' steps':'',r.Notes||''].filter(Boolean).join(' · ');
+        }else if(t==='Cardio'){detail=[durStr(r.Duration_min,r.Duration_sec),r.Notes||''].filter(Boolean).join(' · ');}
+        else if(t==='gym'){detail=`${r.Gym_Day} body · ${r._count} exercises`;}
+        const badgeT=t==='gym'?(r.Gym_Day||'gym'):t;
+        return`<div class="row-item"><div>
+          <span class="badge ${badgeT}">${t==='gym'?(r.Gym_Day||'Gym'):t}</span>
+          <span style="margin-left:8px;font-size:13px;font-weight:500;">${r.Date}</span>
+          ${detail?`<div style="font-size:11px;color:var(--text3);margin-top:3px;font-family:'DM Mono',monospace;">${detail}</div>`:''}
+        </div></div>`;
+      }).join('')}
+    </div>`;
+}
+
+let calYear=new Date().getFullYear(), calMonth=new Date().getMonth();
+const MONTH_NAMES=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const DAY_NAMES=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+function renderCalendar(){
+  const firstDay=new Date(calYear,calMonth,1).getDay();
+  const daysInMonth=new Date(calYear,calMonth+1,0).getDate();
+  const todayStr=new Date().toISOString().slice(0,10);
+  const gymDates=[...new Set(GYM.map(r=>r.Date))];
+  const gymDayType={};GYM.forEach(r=>{if(!gymDayType[r.Date])gymDayType[r.Date]=r.Gym_Day;});
+
+  // build day activity map
+  const dayMap={};
+  CARDIO.forEach(r=>{
+    if(!dayMap[r.Date])dayMap[r.Date]={types:new Set(),km:0,steps:0};
+    dayMap[r.Date].types.add(r.Type.toLowerCase());
+    dayMap[r.Date].km+=r.Distance_km||0;
+    dayMap[r.Date].steps+=r.Steps||0;
+  });
+  gymDates.forEach(d=>{
+    if(!dayMap[d])dayMap[d]={types:new Set(),km:0,steps:0};
+    dayMap[d].types.add('gym');
+  });
+
+  // month stats
+  const prefix=`${calYear}-${String(calMonth+1).padStart(2,'0')}`;
+  const monthCardio=CARDIO.filter(r=>r.Date.startsWith(prefix));
+  const monthGym=[...new Set(GYM.filter(r=>r.Date.startsWith(prefix)).map(r=>r.Date))];
+  const monthRuns=monthCardio.filter(r=>r.Type==='Run');
+  const monthWalks=monthCardio.filter(r=>r.Type==='Walk');
+  const monthRunKm=monthRuns.reduce((a,r)=>a+r.Distance_km,0);
+  const monthWalkKm=monthWalks.reduce((a,r)=>a+r.Distance_km,0);
+  const monthSteps=monthCardio.reduce((a,r)=>a+(r.Steps||0),0);
+  const activeDays=new Set([...Object.keys(dayMap).filter(d=>d.startsWith(prefix))]).size;
+
+  // calendar grid
+  let cells='';
+  for(let i=0;i<firstDay;i++) cells+=`<div class="cal-cell empty"></div>`;
+  for(let d=1;d<=daysInMonth;d++){
+    const dateStr=`${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isToday=dateStr===todayStr;
+    const info=dayMap[dateStr];
+    let labels='',km='';
+    if(info){
+      const types=[...info.types];
+      // order: gym, run, walk, cardio
+      const order=['gym','run','walk','cardio','bike'];
+      order.filter(t=>types.includes(t)).forEach(t=>{
+        const lbl=t==='gym'?(gymDayType[dateStr]||'Gym'):t.charAt(0).toUpperCase()+t.slice(1);
+        labels+=`<span class="cal-label ${t}">${lbl}</span>`;
+      });
+      if(info.km>0) km=`<div class="cal-km">${info.km.toFixed(1)} km</div>`;
+      if(info.steps>0&&info.km===0) km=`<div class="cal-km">${info.steps.toLocaleString()} steps</div>`;
+    }
+    cells+=`<div class="cal-cell${isToday?' today':''}">
+      <div class="cal-num">${d}</div>
+      <div class="cal-labels">${labels}</div>
+      ${km}
+    </div>`;
+  }
+
+  document.getElementById('tab-calendar').innerHTML=`
+    <div class="month-stats">
+      <div class="metric-card"><div class="lbl">Active days</div><div class="val">${activeDays}</div><div class="sub">this month</div></div>
+      <div class="metric-card"><div class="lbl">Gym sessions</div><div class="val">${monthGym.length}</div><div class="sub">this month</div></div>
+      <div class="metric-card"><div class="lbl">Km run</div><div class="val">${monthRunKm.toFixed(1)}</div><div class="sub">this month</div></div>
+      <div class="metric-card"><div class="lbl">Km walked</div><div class="val">${monthWalkKm.toFixed(1)}</div><div class="sub">this month</div></div>
+      <div class="metric-card"><div class="lbl">Steps</div><div class="val">${monthSteps>999?(monthSteps/1000).toFixed(1)+'k':monthSteps}</div><div class="sub">this month</div></div>
+    </div>
+    <div class="card">
+      <div class="cal-nav">
+        <button onclick="calMonth--;if(calMonth<0){calMonth=11;calYear--;}renderCalendar()">← Prev</button>
+        <h2>${MONTH_NAMES[calMonth]} ${calYear}</h2>
+        <button onclick="calMonth++;if(calMonth>11){calMonth=0;calYear++;}renderCalendar()">Next →</button>
+      </div>
+      <div class="cal-grid">
+        ${DAY_NAMES.map(d=>`<div class="cal-header">${d}</div>`).join('')}
+        ${cells}
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Legend</div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <span style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);"><span class="cal-label gym">Lower/Upper/Full</span> Gym day</span>
+        <span style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);"><span class="cal-label run">Run</span> Running</span>
+        <span style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);"><span class="cal-label walk">Walk</span> Walking</span>
+        <span style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);"><span class="cal-label cardio">Cardio</span> Cardio</span>
+        <span style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);"><span class="cal-label bike">Bike</span> Bike</span>
+      </div>
+    </div>`;
+}
+
+renderOverview();
+</script>
+</body>
+</html>
